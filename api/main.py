@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.responses import JSONResponse
 
 from fastapi import FastAPI, Request
 from pydantic import BaseModel
@@ -43,7 +44,7 @@ def authenticate(req: AuthRequest):
     attempts = redis_client.get(f"ratelimit:{req.username}")
     if attempts and int(attempts) >= 3:
         # 3 kez yanlış girdiyse HTTP 401 fırlatarak FreeRADIUS'u reddetmeye zorla
-        raise HTTPException(status_code=401, detail="Cok fazla hatali deneme!")
+        return JSONResponse(status_code=401, content={"Reply-Message": "Hesabiniz kilitlendi! Cok fazla hatali deneme."})
 
     # ADIM 2: Veritabanında Kullanıcıyı Bul
     cursor = conn.cursor()
@@ -51,7 +52,7 @@ def authenticate(req: AuthRequest):
     result = cursor.fetchone()
     
     if not result:
-        raise HTTPException(status_code=401, detail="Kullanici bulunamadi!")
+        return JSONResponse(status_code=401, content={"Reply-Message": "Kullanici bulunamadi!"})
         
     db_password_hash = result[0] 
     gelen_sifre_hash = hashlib.sha256(req.password.encode()).hexdigest()  
@@ -65,7 +66,7 @@ def authenticate(req: AuthRequest):
     else:
         redis_client.incr(f"ratelimit:{req.username}")
         redis_client.expire(f"ratelimit:{req.username}", 60)
-        raise HTTPException(status_code=401, detail="Hatali sifre!")
+        return JSONResponse(status_code=401, content={"Reply-Message": "Hatali sifre! Lutfen tekrar deneyin."})
     
 
 # 5. YETKİLENDİRME (AUTHORIZATION) ENDPOINT'İ
