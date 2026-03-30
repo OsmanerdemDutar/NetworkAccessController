@@ -1,0 +1,38 @@
+# Ana dinleme kurallarımız
+server default {
+    listen {
+        type = auth
+        ipaddr = *
+        port = 1812
+    }
+    listen {
+        type = acct
+        ipaddr = *
+        port = 1813
+    }
+
+    authorize {
+        # 1. API'nin /authorize kapısına gidip VLAN (Yetki) ayarlarını al
+        rest
+        
+        # 2. Şifre kontrolü (Authentication) görevini de REST modülüne devret!
+        update control {
+            Auth-Type := rest
+        }
+    }
+
+    authenticate {
+        Auth-Type rest {
+            rest
+            # İŞTE EKSİK OLAN SİHİRLİ DOKUNUŞ BURASI:
+            # "Eğer REST API (Python) onay verirse (ok), hiç düşünmeden KABUL ET!"
+            if (ok || updated) {
+                accept
+            }
+        }
+    }
+    accounting {
+        # 4. Giriş/Çıkış loglarını /accounting kapısına yolla
+        rest
+    }
+}

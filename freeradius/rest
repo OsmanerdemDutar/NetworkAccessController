@@ -1,0 +1,34 @@
+# Bu dosya rlm_rest modülünün ayarıdır.
+# Gelen istekleri rlm_rest modülü ile JSON'a çevirip API'mize fırlatıyoruz.
+rest {
+    # API'mizin ağdaki adresi (Docker sayesinde s3m_nac_api ismini otomatik bulur)
+    connect_uri = "http://s3m_nac_api:8000"
+
+    # 1. Yetkilendirme (Nereye girebilir?)
+    authorize {
+        uri = "${..connect_uri}/authorize"
+        method = 'post'
+        body = 'json'
+        data = '{"username": "%{User-Name}", "mac": "%{Calling-Station-Id}"}'
+        tls = no
+    }
+
+    # 2. Kimlik Doğrulama (Şifresi doğru mu?)
+    authenticate {
+        uri = "${..connect_uri}/auth"
+        method = 'post'
+        body = 'json'
+        data = '{"username": "%{User-Name}", "password": "%{User-Password}", "mac": "%{Calling-Station-Id}"}'
+        tls = no
+    }
+
+    # 3. Hesap Yönetimi (Ne kadar veri harcadı?)
+    # Accounting paketlerinde hata almamak için % Acct-Input-Octets:-0 şeklinde bir B planı mekanizması kurguladım
+    accounting {
+        uri = "${..connect_uri}/accounting"
+        method = 'post'
+        body = 'json'
+        data = '{"username": "%{User-Name}", "status_type": "%{Acct-Status-Type}", "session_id": "%{Acct-Session-Id}", "nas_ip": "%{NAS-IP-Address}", "input_octets": %{%{Acct-Input-Octets}:-0}, "output_octets": %{%{Acct-Output-Octets}:-0}, "session_time": %{%{Acct-Session-Time}:-0}}'        
+        tls = no
+    }
+}
