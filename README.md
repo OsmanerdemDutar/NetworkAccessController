@@ -149,7 +149,10 @@ The system enforces strict operational standards:
 ### 1. Clone the Repository
 
 ```bash id="cln123"
-git clone https://github.com/your-repo/nac-system.git
+git clone https://github.com/OsmanerdemDutar/NetworkAccessController.git
+
+cd NetworkAccessController
+
 cd nac-system
 ```
 
